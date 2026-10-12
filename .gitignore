@@ -2,9 +2,6 @@
 data/
 docs/*.pdf
 
-# Notebook de ejemplo con gráficos incrustados (pesado); el .py tiene el mismo código
-examples/*.ipynb
-
 # Resultados generados a partir de los datos: se regeneran ejecutando el código
 resultados/
 
