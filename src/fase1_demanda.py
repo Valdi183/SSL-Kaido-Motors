@@ -3,16 +3,18 @@ Fase 1: demanda real de Kaido (pregunta 1 del caso).
 
 Pasos, por segmento y mes:
   1. Retail = matriculaciones - automatriculaciones.
-  2. Meses de compras adelantadas (adelanto_compras) y de caída posterior
-     (caida_tras_adelanto): se sustituyen por la demanda "normal" esperada,
-     nivel desestacionalizado de los 6 meses normales previos x factor estacional.
-     El factor estacional sale del mercado del segmento (A001-A012), que tiene
+  2. Demanda "normal" esperada = nivel desestacionalizado de los meses normales
+     vecinos (3 antes y 3 después si los hay; si no, los 6 previos) x factor
+     estacional. El factor sale del mercado del segmento (A001-A012), que tiene
      más historia y menos ruido que las ventas de Kaido.
+     - Meses de adelanto de compras o subida del IVA: min(vendido, esperado),
+       solo se quita el exceso.
+     - Meses de caída tras el adelanto: max(vendido, esperado), solo se rellena.
   3. Meses con rotura de stock (desde A009, único periodo con stock): el stock
      a fin de mes es casi cero, así que se vendió lo que había y la demanda fue
      al menos eso. Se toma el máximo entre lo vendido y lo esperado.
-  4. CSUV (lanzado en A012-08, sin nivel previo): se le aplica el mismo exceso
-     relativo que tuvo su mercado en los meses de adelanto.
+  4. CSUV (lanzado en A012-08, sin nivel previo): solo se corrige si su mercado
+     muestra exceso en los meses de adelanto (en A012 no lo muestra).
 
 Ejecutar desde la raíz del repositorio:
     python src/fase1_demanda.py

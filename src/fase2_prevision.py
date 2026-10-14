@@ -132,96 +132,101 @@ def prevision(hasta, X_fut):
     return pd.concat(filas, names=['segmento', 'fecha'])
 
 
-# ==================================================================================
-# 1. Validación: entrenar hasta A011, prever A012
-# ==================================================================================
-X_hist = exog_historico()
-X_2012 = X_hist.loc['2012'].copy()
-X_2012['adelanto_compras'] = 0     # se compara con la demanda limpia, que ya no tiene el adelanto
-val = prevision('2011-12', X_2012)
-val['real'] = [demanda.loc[f, s] for s, f in val.index]
-val['merc_real'] = [mercado.loc[f, s] for s, f in val.index]
-val['naive'] = [demanda.loc[f - pd.DateOffset(years=1), s] for s, f in val.index]
+def main():
+    # ==================================================================================
+    # 1. Validación: entrenar hasta A011, prever A012
+    # ==================================================================================
+    X_hist = exog_historico()
+    X_2012 = X_hist.loc['2012'].copy()
+    X_2012['adelanto_compras'] = 0     # se compara con la demanda limpia, que ya no tiene el adelanto
+    val = prevision('2011-12', X_2012)
+    val['real'] = [demanda.loc[f, s] for s, f in val.index]
+    val['merc_real'] = [mercado.loc[f, s] for s, f in val.index]
+    val['naive'] = [demanda.loc[f - pd.DateOffset(years=1), s] for s, f in val.index]
 
-print('=== Validación A012 (entrenado hasta A011) ===')
-filas = []
-for s in d.SEGMENTOS:
-    if s == 'CSUV':
-        continue                # sin historia antes de A012-08: no se puede validar
-    v = val.loc[s]
-    err = v.demanda - v.real
-    filas.append({
-        'segmento': s,
-        'real_A012': v.real.sum(), 'prev_A012': v.demanda.sum(),
-        'error_anual_%': (v.demanda.sum() / v.real.sum() - 1) * 100,
-        'MAPE_mes_%': (err.abs() / v.real).mean() * 100,
-        'MAPE_naive_%': ((v.naive - v.real).abs() / v.real).mean() * 100,
-        'error_mercado_%': (v.mercado.sum() / v.merc_real.sum() - 1) * 100 if s != 'S' else np.nan,
-        'sigma_coches': err.std(),
-        'autocorr_err': err.autocorr(),
-    })
-tabla_val = pd.DataFrame(filas).set_index('segmento')
-print(tabla_val.round(1).to_string())
-tot = val.drop('CSUV').groupby(level='fecha')[['demanda', 'real']].sum()
-print(f"TOTAL (sin CSUV): real {tot.real.sum():.0f}  previsto {tot.demanda.sum():.0f}  "
-      f"error {(tot.demanda.sum() / tot.real.sum() - 1) * 100:+.1f} %  "
-      f"MAPE mensual {((tot.demanda - tot.real).abs() / tot.real).mean() * 100:.1f} %")
+    print('=== Validación A012 (entrenado hasta A011) ===')
+    filas = []
+    for s in d.SEGMENTOS:
+        if s == 'CSUV':
+            continue                # sin historia antes de A012-08: no se puede validar
+        v = val.loc[s]
+        err = v.demanda - v.real
+        filas.append({
+            'segmento': s,
+            'real_A012': v.real.sum(), 'prev_A012': v.demanda.sum(),
+            'error_anual_%': (v.demanda.sum() / v.real.sum() - 1) * 100,
+            'MAPE_mes_%': (err.abs() / v.real).mean() * 100,
+            'MAPE_naive_%': ((v.naive - v.real).abs() / v.real).mean() * 100,
+            'error_mercado_%': (v.mercado.sum() / v.merc_real.sum() - 1) * 100 if s != 'S' else np.nan,
+            'sigma_coches': err.std(),
+            'autocorr_err': err.autocorr(),
+        })
+    tabla_val = pd.DataFrame(filas).set_index('segmento')
+    print(tabla_val.round(1).to_string())
+    tot = val.drop('CSUV').groupby(level='fecha')[['demanda', 'real']].sum()
+    print(f"TOTAL (sin CSUV): real {tot.real.sum():.0f}  previsto {tot.demanda.sum():.0f}  "
+          f"error {(tot.demanda.sum() / tot.real.sum() - 1) * 100:+.1f} %  "
+          f"MAPE mensual {((tot.demanda - tot.real).abs() / tot.real).mean() * 100:.1f} %")
 
-# ==================================================================================
-# 2. Previsión de A013 (escenario central), reentrenando hasta A012
-# ==================================================================================
-X_2013 = exog_A013()
-prev = prevision('2012-12', X_2013)
+    # ==================================================================================
+    # 2. Previsión de A013 (escenario central), reentrenando hasta A012
+    # ==================================================================================
+    X_2013 = exog_A013()
+    prev = prevision('2012-12', X_2013)
 
-# Error típico mensual (sigma) para el stock de seguridad y la simulación:
-# error relativo de la validación aplicado al nivel previsto de A013.
-# CSUV no se pudo validar: se le asigna el mayor error relativo de los SUV.
-err_rel = (tabla_val.sigma_coches / (tabla_val.real_A012 / 12))
-err_rel['CSUV'] = err_rel[['MSUV', 'SSUV']].max()
-media_mes = prev.groupby(level='segmento').demanda.mean()
-sigma = (err_rel * media_mes).rename('sigma_coches')
-autocorr = tabla_val.autocorr_err.reindex(d.SEGMENTOS).fillna(tabla_val.autocorr_err.mean())
+    # Error típico mensual (sigma) para el stock de seguridad y la simulación:
+    # error relativo de la validación aplicado al nivel previsto de A013.
+    # CSUV no se pudo validar: se le asigna el mayor error relativo de los SUV.
+    err_rel = (tabla_val.sigma_coches / (tabla_val.real_A012 / 12))
+    err_rel['CSUV'] = err_rel[['MSUV', 'SSUV']].max()
+    media_mes = prev.groupby(level='segmento').demanda.mean()
+    sigma = (err_rel * media_mes).rename('sigma_coches')
+    autocorr = tabla_val.autocorr_err.reindex(d.SEGMENTOS).fillna(tabla_val.autocorr_err.mean())
 
-print('\n=== Previsión A013, escenario central (coches) ===')
-tabla = prev.demanda.unstack('segmento')[d.SEGMENTOS].round()
-tabla['TOTAL'] = tabla.sum(axis=1)
-tabla.index = [f'A013-{m:02d}' for m in tabla.index.month]
-print(tabla.astype(int).to_string())
+    print('\n=== Previsión A013, escenario central (coches) ===')
+    tabla = prev.demanda.unstack('segmento')[d.SEGMENTOS].round()
+    tabla['TOTAL'] = tabla.sum(axis=1)
+    tabla.index = [f'A013-{m:02d}' for m in tabla.index.month]
+    print(tabla.astype(int).to_string())
 
-resumen = pd.DataFrame({
-    'demanda_A012': demanda.loc['2012'].sum(),
-    'prev_A013': prev.groupby(level='segmento').demanda.sum(),
-    'cuota_A013_%': prev.groupby(level='segmento').cuota.mean() * 100,
-    'mercado_A012': mercado.loc['2012'].sum(),
-    'mercado_A013': prev.groupby(level='segmento').mercado.sum(min_count=1),
-    'sigma_mes': sigma, 'error_rel_mes_%': err_rel * 100, 'autocorr': autocorr,
-}).reindex(d.SEGMENTOS)
-resumen['var_demanda_%'] = (resumen.prev_A013 / resumen.demanda_A012 - 1) * 100
-resumen['var_mercado_%'] = (resumen.mercado_A013 / resumen.mercado_A012 - 1) * 100
-print('\n=== Resumen por segmento ===')
-print(resumen.round(1).to_string())
-print(f"\nTOTAL: demanda A012 {resumen.demanda_A012.sum():.0f} -> A013 {resumen.prev_A013.sum():.0f} "
-      f"({(resumen.prev_A013.sum() / resumen.demanda_A012.sum() - 1) * 100:+.1f} %)")
+    resumen = pd.DataFrame({
+        'demanda_A012': demanda.loc['2012'].sum(),
+        'prev_A013': prev.groupby(level='segmento').demanda.sum(),
+        'cuota_A013_%': prev.groupby(level='segmento').cuota.mean() * 100,
+        'mercado_A012': mercado.loc['2012'].sum(),
+        'mercado_A013': prev.groupby(level='segmento').mercado.sum(min_count=1),
+        'sigma_mes': sigma, 'error_rel_mes_%': err_rel * 100, 'autocorr': autocorr,
+    }).reindex(d.SEGMENTOS)
+    resumen['var_demanda_%'] = (resumen.prev_A013 / resumen.demanda_A012 - 1) * 100
+    resumen['var_mercado_%'] = (resumen.mercado_A013 / resumen.mercado_A012 - 1) * 100
+    print('\n=== Resumen por segmento ===')
+    print(resumen.round(1).to_string())
+    print(f"\nTOTAL: demanda A012 {resumen.demanda_A012.sum():.0f} -> A013 {resumen.prev_A013.sum():.0f} "
+          f"({(resumen.prev_A013.sum() / resumen.demanda_A012.sum() - 1) * 100:+.1f} %)")
 
-# --- Guardar -----------------------------------------------------------------------
-prev.reset_index().to_csv(d.RESULTADOS / 'prevision_A013_central.csv', index=False)
-resumen.to_csv(d.RESULTADOS / 'prevision_resumen.csv')
-val.reset_index().to_csv(d.RESULTADOS / 'validacion_A012.csv', index=False)
+    # --- Guardar -----------------------------------------------------------------------
+    prev.reset_index().to_csv(d.RESULTADOS / 'prevision_A013_central.csv', index=False)
+    resumen.to_csv(d.RESULTADOS / 'prevision_resumen.csv')
+    val.reset_index().to_csv(d.RESULTADOS / 'validacion_A012.csv', index=False)
 
-fig, ejes = plt.subplots(4, 2, figsize=(14, 12), sharex=True)
-for ax, s in zip(ejes.flat, d.SEGMENTOS + ['TOTAL']):
-    cols = d.SEGMENTOS if s == 'TOTAL' else [s]
-    ax.plot(demanda.loc['2010':, cols].sum(axis=1), color='0.3', label='demanda real')
-    v = val.loc[cols].groupby(level='fecha').demanda.sum() if s != 'TOTAL' else \
-        val.drop('CSUV').groupby(level='fecha').demanda.sum()
-    if s != 'CSUV':
-        ax.plot(v, color='tab:orange', ls='--', label='validación A012')
-    ax.plot(prev.loc[cols].groupby(level='fecha').demanda.sum(), color='tab:red',
-            label='previsión A013')
-    ax.axvline(pd.Timestamp('2013-01-01'), color='0.6', lw=0.8)
-    ax.set_title(s)
-ejes[0, 0].legend(fontsize=8)
-fig.suptitle('Demanda de Kaido: validación con A012 y previsión central de A013')
-fig.tight_layout()
-fig.savefig(d.RESULTADOS / 'fase2_prevision.png', dpi=120)
-print(f'\nGuardado en {d.RESULTADOS}')
+    fig, ejes = plt.subplots(4, 2, figsize=(14, 12), sharex=True)
+    for ax, s in zip(ejes.flat, d.SEGMENTOS + ['TOTAL']):
+        cols = d.SEGMENTOS if s == 'TOTAL' else [s]
+        ax.plot(demanda.loc['2010':, cols].sum(axis=1), color='0.3', label='demanda real')
+        v = val.loc[cols].groupby(level='fecha').demanda.sum() if s != 'TOTAL' else \
+            val.drop('CSUV').groupby(level='fecha').demanda.sum()
+        if s != 'CSUV':
+            ax.plot(v, color='tab:orange', ls='--', label='validación A012')
+        ax.plot(prev.loc[cols].groupby(level='fecha').demanda.sum(), color='tab:red',
+                label='previsión A013')
+        ax.axvline(pd.Timestamp('2013-01-01'), color='0.6', lw=0.8)
+        ax.set_title(s)
+    ejes[0, 0].legend(fontsize=8)
+    fig.suptitle('Demanda de Kaido: validación con A012 y previsión central de A013')
+    fig.tight_layout()
+    fig.savefig(d.RESULTADOS / 'fase2_prevision.png', dpi=120)
+    print(f'\nGuardado en {d.RESULTADOS}')
+
+
+if __name__ == '__main__':
+    main()
