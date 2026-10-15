@@ -29,6 +29,8 @@ SSL-Kaido-Motors/
 ├── docs/
 │   ├── apuntes.md               # Resolución de trabajo de las 5 preguntas
 │   └── kaido-motors-case-study.pdf   # Enunciado (no está en el repositorio)
+├── entrega/
+│   └── resumen_ejecutivo.pdf    # Resumen ejecutivo para el comité (Tabla 5)
 ├── examples/
 │   ├── annex4_demand_baseline.ipynb  # Ejemplo del Anexo 4 del enunciado
 │   └── annex4_demand_baseline.py
