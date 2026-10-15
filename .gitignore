@@ -226,3 +226,6 @@ __marimo__/
 
 # config vscode
 .vscode/settings.json
+
+# Apuntes personales de trabajo (no se suben)
+docs/apuntes.md
