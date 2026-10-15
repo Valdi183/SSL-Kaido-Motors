@@ -10,9 +10,9 @@ Kaido Motors España importa coches de una marca que fabrica fuera de Europa y l
 - **Previsión de A013.** En el escenario central se esperan **~18.200 coches**, un 8 % menos que la demanda real de A012. En el pesimista serían ~15.700 y en el optimista ~23.300.
 - **Plan de producción.** Deben llegar a la red **~16.300 coches** con el plan central, menos de lo que se vende, para vaciar el exceso de stock. El stock medio queda en 1,4 meses de venta y los coches con más de 90 días desaparecen a fin de año.
 - **Margen (CVP).** **+61 M€** en el central, **+88 M€** en el optimista y **−3 M€** en el pesimista. Lo que lleva el pesimista a pérdidas es sobre todo la posible prima de CO₂, no la producción.
-- **Recomendación.** Empujar MSUV y CSUV; mantener SSUV, MD y S; frenar C y B. El stock de seguridad también va por segmento: alto donde quedarse corto cuesta 8–10 veces más que pasarse, y nulo en B.
+- **Recomendación.** Empujar MSUV y CSUV; mantener SSUV, MD y S; frenar C y B. El stock de seguridad también va por segmento: alto donde quedarse corto cuesta 7–10 veces más que pasarse, y nulo en B.
 
-El razonamiento completo de cada pregunta está en [docs/apuntes.md](docs/apuntes.md): cifras, de qué script y línea sale cada una, supuestos y limitaciones.
+El plan y sus resultados para el comité están en [entrega/](entrega/): el resumen ejecutivo y la presentación, en PDF.
 
 ## Estructura
 
@@ -27,10 +27,10 @@ SSL-Kaido-Motors/
 │   ├── fase4_simulacion.py      # P3–P4: simulación Monte Carlo del año, plan de llegadas y Tabla 5
 │   └── fase5_coste_error.py     # P5: coste de equivocarse, stock de seguridad y señales
 ├── docs/
-│   ├── apuntes.md               # Resolución de trabajo de las 5 preguntas
 │   └── kaido-motors-case-study.pdf   # Enunciado (no está en el repositorio)
 ├── entrega/
-│   └── resumen_ejecutivo.pdf    # Resumen ejecutivo para el comité (Tabla 5)
+│   ├── resumen_ejecutivo.pdf    # Resumen ejecutivo para el comité (Tabla 5)
+│   └── Plan de ventas y producción A013.pdf   # Presentación para el comité
 ├── examples/
 │   ├── annex4_demand_baseline.ipynb  # Ejemplo del Anexo 4 del enunciado
 │   └── annex4_demand_baseline.py
@@ -42,6 +42,8 @@ SSL-Kaido-Motors/
 ## Puesta en marcha
 
 ### 1. Datos y enunciado
+
+> **En la entrega en ZIP, `data/`, el enunciado y `resultados/` ya están incluidos**: este paso solo hace falta al clonar el repositorio desde GitHub.
 
 El repositorio **no incluye los datos ni el enunciado**: son material del curso y su uso es exclusivamente docente. Después de clonar, copia los ficheros del curso en estas rutas:
 
@@ -82,7 +84,7 @@ Ejecuta los scripts desde la raíz del repositorio y en este orden, porque cada 
 | 4 | `python src/fase4_simulacion.py` | P3–P4 | `plan_llegadas_central.csv`, `tabla5_total.csv`, `tabla5_segmentos.csv`, `fase4_simulacion.png` |
 | 5 | `python src/fase5_coste_error.py` | P5 | `fase5_rejilla_z.csv`, `fase5_matriz_plan.csv`, `fase5_senales.csv`, `fase5_recomendacion.csv` |
 
-La carpeta `resultados/` se crea sola al ejecutar los scripts.
+La carpeta `resultados/` se crea sola al ejecutar los scripts. En el ZIP ya viene generada; volver a ejecutarlos da exactamente los mismos ficheros, porque la simulación usa una semilla fija.
 
 ## Notas sobre los datos
 
