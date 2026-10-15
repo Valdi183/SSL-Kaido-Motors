@@ -1,85 +1,92 @@
-# Kaido Motors España: demanda, stock y beneficio
+# Kaido Motors España: plan de ventas y producción de A013
 
-Caso de uso de la asignatura **Simulación de Sistemas Logísticos** (Universidad Alfonso X el Sabio).
-Autores del caso: Jacinto Velasco y Javier Goikoetxea. Profesor: Javier Goikoetxea.
+Resolución del caso **Kaido Motors España: demanda, stock y beneficio**, de la asignatura **Simulación de Sistemas Logísticos** (Universidad Alfonso X el Sabio). Autores del caso: Jacinto Velasco y Javier Goikoetxea.
 
-Este repositorio contiene el enunciado y los datos del caso. Es un repositorio de **solo lectura**: clonadlo o descargadlo y trabajad en vuestro propio entorno.
+Kaido Motors España importa coches de una marca que fabrica fuera de Europa y los reparte entre 64 concesionarios. Lo que se decide producir hoy llega a la red tres meses después. El proyecto responde a las cinco preguntas del caso: cuál es la demanda real, cuánto se venderá en A013, qué pasa en un escenario pesimista o en uno optimista, cuántos coches hay que fabricar y cuánto cuesta equivocarse.
 
-> Caso basado en uno real. Los datos y los nombres se han modificado y camuflado para su uso académico. **Uso exclusivamente docente: no los difundáis fuera del curso.**
+## Resultados principales
 
-## Contenido
+- **Demanda real.** Las ventas de A012 crecieron un 8,5 %, pero con la misma gama la demanda real **cayó un 2 %**. La diferencia se explica por las automatriculaciones, unos 1.100 coches de compras adelantadas a A013 y el lanzamiento del CSUV.
+- **Previsión de A013.** En el escenario central se esperan **~18.200 coches**, un 8 % menos que la demanda real de A012. En el pesimista serían ~15.700 y en el optimista ~23.300.
+- **Plan de producción.** Deben llegar a la red **~16.300 coches** con el plan central, menos de lo que se vende, para vaciar el exceso de stock. El stock medio queda en 1,4 meses de venta y los coches con más de 90 días desaparecen a fin de año.
+- **Margen (CVP).** **+61 M€** en el central, **+88 M€** en el optimista y **−3 M€** en el pesimista. Lo que lleva el pesimista a pérdidas es sobre todo la posible prima de CO₂, no la producción.
+- **Recomendación.** Empujar MSUV y CSUV; mantener SSUV, MD y S; frenar C y B. El stock de seguridad también va por segmento: alto donde quedarse corto cuesta 8–10 veces más que pasarse, y nulo en B.
+
+El razonamiento completo de cada pregunta está en [docs/apuntes.md](docs/apuntes.md): cifras, de qué script y línea sale cada una, supuestos y limitaciones.
+
+## Estructura
 
 ```
-sim-kaido-motors/
-├── README.md
-├── requirements.txt
-├── .gitattributes
-├── .gitignore
+SSL-Kaido-Motors/
+├── src/
+│   ├── datos.py                 # Carga común de los CSV y rutas del proyecto
+│   ├── fase0_checks.py          # Comprobaciones de integridad de los datos
+│   ├── fase1_demanda.py         # P1: demanda real (sin automatriculaciones, adelantos ni roturas)
+│   ├── fase2_prevision.py       # P2: modelo mercado × cuota, validación con A012 y previsión de A013
+│   ├── fase3_escenarios.py      # P3: escenarios pesimista, central y optimista (Tabla 4)
+│   ├── fase4_simulacion.py      # P3–P4: simulación Monte Carlo del año, plan de llegadas y Tabla 5
+│   └── fase5_coste_error.py     # P5: coste de equivocarse, stock de seguridad y señales
 ├── docs/
-│   └── kaido-motors-case-study.pdf    # Enunciado del caso
+│   ├── apuntes.md               # Resolución de trabajo de las 5 preguntas
+│   └── kaido-motors-case-study.pdf   # Enunciado (no está en el repositorio)
 ├── examples/
-│   ├── annex4_demand_baseline.ipynb   # Ejemplo del Anexo 4 en notebook (con gráficos)
-│   └── annex4_demand_baseline.py      # Mismo ejemplo en script (sin gráficos)
-└── data/
-    ├── ventas_mensual.csv             # Ventas de Kaido por mes, segmento y canal (A003-A012)
-    ├── stock_mensual.csv              # Stock de la red por mes y segmento (A009-A012)
-    ├── mercado_mensual.csv            # Mercado por mes, segmento y canal (A001-A012)
-    ├── segmentos.csv                  # Ficha de cada uno de los siete segmentos
-    ├── codigos.csv                    # Códigos de producto y su agrupación por segmento
-    ├── macro_mensual.csv              # Variables económicas, sucesos y calendario (A001-A012)
-    └── calendario_A013.csv            # Días laborables y Semana Santa de A013
+│   ├── annex4_demand_baseline.ipynb  # Ejemplo del Anexo 4 del enunciado
+│   └── annex4_demand_baseline.py
+├── data/                        # Datos del caso (no están en el repositorio)
+├── resultados/                  # Salidas generadas por los scripts (no están en el repositorio)
+└── requirements.txt
 ```
-
-La descripción de cada variable está en el **Anexo 5** del enunciado.
 
 ## Puesta en marcha
 
-Necesitáis Python 3.10 o superior.
+### 1. Datos y enunciado
+
+El repositorio **no incluye los datos ni el enunciado**: son material del curso y su uso es exclusivamente docente. Después de clonar, copia los ficheros del curso en estas rutas:
+
+```
+data/
+├── ventas_mensual.csv
+├── stock_mensual.csv
+├── mercado_mensual.csv
+├── segmentos.csv
+├── codigos.csv
+├── macro_mensual.csv
+└── calendario_A013.csv
+docs/kaido-motors-case-study.pdf
+```
+
+**No abras ni guardes los CSV con Excel.** Puede cambiar el separador y los decimales, y además convierte el código de modelo `NA` en una celda vacía.
+
+### 2. Librerías
+
+Necesitas Python 3.10 o superior.
 
 ```bash
-git clone <URL-del-repositorio>
-cd sim-kaido-motors
-
-python -m venv .venv
-source .venv/bin/activate        # En Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Ejecutad siempre el código **desde la raíz del repositorio**, para que la ruta `data/` se resuelva bien.
+Si prefieres aislar las librerías, crea antes un entorno virtual con `python -m venv .venv` y actívalo. En Windows se activa con `.venv\Scripts\activate`.
 
-## Cómo leer los CSV
+## Cómo ejecutarlo
 
-Los ficheros están separados por comas. Al leerlos hay que indicar que **solo las celdas vacías son datos que faltan**. Si no, pandas convierte el código de modelo `NA` en un valor nulo (el Anexo 4 del enunciado lo explica):
+Ejecuta los scripts desde la raíz del repositorio y en este orden, porque cada fase usa la salida de la anterior:
 
-```python
-import pandas as pd
+| Orden | Script | Pregunta | Salidas principales en `resultados/` |
+|---|---|---|---|
+| 0 | `python src/fase0_checks.py` | — | Comprobaciones por pantalla |
+| 1 | `python src/fase1_demanda.py` | P1 | `demanda_real.csv`, `fase1_demanda.png` |
+| 2 | `python src/fase2_prevision.py` | P2 | `prevision_A013_central.csv`, `validacion_A012.csv`, `fase2_prevision.png` |
+| 3 | `python src/fase3_escenarios.py` | P3 | `escenarios_demanda.csv`, `fase3_escenarios.png` |
+| 4 | `python src/fase4_simulacion.py` | P3–P4 | `plan_llegadas_central.csv`, `tabla5_total.csv`, `tabla5_segmentos.csv`, `fase4_simulacion.png` |
+| 5 | `python src/fase5_coste_error.py` | P5 | `fase5_rejilla_z.csv`, `fase5_matriz_plan.csv`, `fase5_senales.csv`, `fase5_recomendacion.csv` |
 
-def leer(fichero):
-    return pd.read_csv("data/" + fichero, keep_default_na=False, na_values=[""])
+La carpeta `resultados/` se crea sola al ejecutar los scripts.
 
-mercado = leer("mercado_mensual.csv")
-macro = leer("macro_mensual.csv")
-```
+## Notas sobre los datos
 
-## Código de ejemplo
+- **Años.** Los años reales del caso se han sustituido por códigos: A001 es el primero y A012 el último cerrado. A013 es el año que se planifica. Para las series temporales, A001 se trata como el año ficticio 2001, A002 como 2002, y así sucesivamente (Anexo 4). Los días laborables y la Semana Santa se toman de los datos, no de esas fechas ficticias.
+- **Lectura de los CSV.** [src/datos.py](src/datos.py) los lee con `keep_default_na=False` para que el código de modelo `NA` no se interprete como un dato que falta.
 
-El Anexo 4 del enunciado está disponible en dos formatos con el mismo código y las mismas secciones:
+## Uso
 
-- **`examples/annex4_demand_baseline.ipynb`**: notebook **con visualización** (serie, descomposición y comparación con A012).
-- **`examples/annex4_demand_baseline.py`**: script **sin visualización**.
-
-Prepara el mercado del SUV medio, lo separa en tendencia, estacionalidad y resto, y ajusta un modelo SARIMAX con dos variables económicas y el calendario. Entrena hasta A011 y compara la previsión con lo que pasó en A012. Es un punto de partida, no la solución del caso.
-
-## Los años del caso
-
-Los años reales se han sustituido por códigos: **A001** es el primer año con datos y **A012** el último cerrado. **A013** es el año que hay que planificar y no tiene datos, salvo el calendario. Para usar librerías de series temporales, el Anexo 4 propone tratar A001 como el año ficticio 2001, A002 como 2002, y así sucesivamente.
-
-Los días laborables y la Semana Santa **no se calculan a partir de la fecha ficticia**: se toman de `macro_mensual.csv` y, para A013, de `calendario_A013.csv`.
-
-## Aviso importante sobre Excel
-
-**No abráis ni guardéis los CSV con Excel.** Puede cambiar el separador (coma por punto y coma), los decimales y el código de modelo `NA` (que convierte en celda vacía). Si queréis echarles un vistazo, usad un editor de texto o pandas.
-
-## Nota de uso
-
-Material de uso docente, exclusivo para el alumnado del curso. No se permite su publicación ni su redistribución sin autorización de los autores.
+El caso está basado en uno real, con datos y nombres modificados. El enunciado y los datos son material docente de la asignatura y no se redistribuyen en este repositorio.
